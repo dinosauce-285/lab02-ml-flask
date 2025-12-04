@@ -41,9 +41,12 @@ def load_models():
     
     if count == 0:
         print(f"lỗi nghiêm trọng: không tìm thấy model nào trong {MODELS_PATH}")
-        sys.exit(1) # dừng server nếu không có model
+        # Không exit ở đây để tránh crash loop trên Render nếu thiếu model, 
+        # nhưng API sẽ trả về lỗi 503 khi gọi.
     else:
         print(f"đã load thành công {count} model")
+
+load_models()
 
 def smart_preprocess(pixels: List[float]) -> np.ndarray:
     # chuyển đổi dữ liệu list sang mảng numpy
@@ -118,7 +121,7 @@ def predict():
 
         # kiểm tra xem model đã sẵn sàng chưa
         if f_type not in MODELS:
-            return jsonify({"error": "model không tồn tại"}), 503
+            return jsonify({"error": "model không tồn tại hoặc chưa load xong"}), 503
 
         # xử lý ảnh đầu vào
         img_centered = smart_preprocess(pixels)
@@ -142,5 +145,4 @@ def predict():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    load_models()
     app.run(debug=CONFIG['DEBUG'], port=CONFIG['PORT'])
