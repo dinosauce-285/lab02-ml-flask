@@ -1,6 +1,7 @@
 import numpy as np
 import joblib
 import os
+import sys # thêm thư viện sys để dừng chương trình nếu lỗi
 from typing import List
 from flask import Flask, request, jsonify
 from flask_cors import CORS
@@ -20,18 +21,27 @@ CORS(app)
 # biến lưu trữ các model đã load
 MODELS = {}
 
+# lấy đường dẫn tuyệt đối của thư mục hiện tại để tránh lỗi path
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELS_PATH = os.path.join(BASE_DIR, CONFIG['MODEL_DIR'])
+
 def load_models():
     # tải các model từ file pkl lên ram
-    print("loading models...")
+    print(f"loading models from: {MODELS_PATH}...")
     count = 0
     for f in CONFIG['FEATURES']:
-        path = os.path.join(CONFIG['MODEL_DIR'], f'model_{f}.pkl')
+        # dùng đường dẫn tuyệt đối để tìm file
+        path = os.path.join(MODELS_PATH, f'model_{f}.pkl')
         if os.path.exists(path):
-            MODELS[f] = joblib.load(path)
-            count += 1
+            try:
+                MODELS[f] = joblib.load(path)
+                count += 1
+            except Exception as e:
+                print(f"lỗi khi đọc model {f}: {e}")
     
     if count == 0:
-        print("cảnh báo: chưa có model nào được load")
+        print(f"lỗi nghiêm trọng: không tìm thấy model nào trong {MODELS_PATH}")
+        sys.exit(1) # dừng server nếu không có model
     else:
         print(f"đã load thành công {count} model")
 
