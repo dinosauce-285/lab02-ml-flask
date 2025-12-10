@@ -109,6 +109,11 @@ def extract_features(img_28x28: np.ndarray, f_type: str) -> np.ndarray:
 
     return norm_img.flatten()
 
+# make sure backend do not hibernate on Render if not used for a long time, pinged by Uptimerobot
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "UP", "service": "ML-Flask-Backend"}), 200
+
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
